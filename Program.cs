@@ -97,18 +97,19 @@ class Program
                             {
                                 status = "Muted";
                                 SetMute(true);
+                                sleepTime = 1500;
                             }
                             else
                             {
                                 status = current.Item.Name;
                                 SetMute(false);
-                            }
 
-                            // set the sleep time to the duration divided by 3 if it's less than the remiaing time
-                            if (current.Item.DurationMs - current.ProgressMs < current.Item.DurationMs / 3)
-                                sleepTime = current.Item.DurationMs - current.ProgressMs;
-                            else
-                                sleepTime = current.Item.DurationMs / 3;
+                                // set the sleep time to the duration divided by 3 if it's less than the remiaing time
+                                if (current.Item.DurationMs - current.ProgressMs < current.Item.DurationMs / 3)
+                                    sleepTime = current.Item.DurationMs - current.ProgressMs;
+                                else
+                                    sleepTime = current.Item.DurationMs / 3;
+                            }
                         }
                         else
                         {
