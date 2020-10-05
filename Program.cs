@@ -160,7 +160,7 @@ class Program
 
             }
 
-            Console.Write(String.Format("\r{0,-50}",status));
+            if(!status.Equals("")) Console.Write(String.Format("\r{0,-50}",status));
             Thread.Sleep(sleepTime);
         }
     }
@@ -228,9 +228,10 @@ class Program
     static async Task RefreshToken()
     {
         Console.WriteLine(String.Format("\r{0,-50}","Refreshing access token..."));
-        token = await auth.RefreshToken(token.RefreshToken);
-        spotifyAPI.AccessToken = token.AccessToken;
-        spotifyAPI.TokenType = token.TokenType;
+        Token newToken = await auth.RefreshToken(token.RefreshToken);
+        spotifyAPI.AccessToken = newToken.AccessToken;
+        spotifyAPI.TokenType = newToken.TokenType;
+        token = newToken;
         Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
         Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
         Console.WriteLine("");
