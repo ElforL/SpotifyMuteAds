@@ -89,12 +89,20 @@ class Program
                         if (current.Error.Status == 429)
                         {
                             Console.WriteLine("`current header` key = `Retry-After` : " + current.Header("Retry-After"));
+                            try
+                            {
+                                sleepTime = int.Parse(current.Header("Retry-After")) * 1000;
+                            }catch (Exception ex)
+                            {
+                                sleepTime = 60000;
+                            }
+                            
                         }
-                        if(errorsCount > 5)
+                        if(errorsCount % 5 == 0 && errorsCount != 0)
                         {
-                            Console.WriteLine("BREAKDOWN: " + errorsCount + " errors in a row");
-                            Console.WriteLine("Shuting down...");
-                            Environment.Exit(1);
+                            Console.WriteLine("--------------------------------------------");
+                            Console.WriteLine("WARNING: " + errorsCount + " errors in a row");
+                            Console.WriteLine("--------------------------------------------");
                         }
                     }
                     else
@@ -110,7 +118,7 @@ class Program
                             }
                             else
                             {
-                                status = current.Item.Name;
+                                status = "Playing: " + current.Item.Name;
                                 SetMute(false);
 
                                 // set the sleep time to the duration divided by 3 if it's less than the remiaing time
@@ -206,6 +214,7 @@ class Program
                 TokenType = token.TokenType,
                 AccessToken = token.AccessToken
             };
+            Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
             Console.WriteLine("Token expires at: " + DateTime.Now.AddSeconds(token.ExpiresIn));
             Console.WriteLine("don't worry we'll refresh it automatically");
         };
@@ -219,12 +228,12 @@ class Program
     static async Task RefreshToken()
     {
         Console.WriteLine(String.Format("\r{0,-50}","Refreshing access token..."));
-        Token newToken = await auth.RefreshToken(token.RefreshToken);
-        spotifyAPI.AccessToken = newToken.AccessToken;
-        spotifyAPI.TokenType = newToken.TokenType;
-        token = newToken;
-        Console.WriteLine("Access token refreshed at "+ DateTime.Now);
+        token = await auth.RefreshToken(token.RefreshToken);
+        spotifyAPI.AccessToken = token.AccessToken;
+        spotifyAPI.TokenType = token.TokenType;
+        Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
         Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
+        Console.WriteLine("");
     }
 
     static void SetMute(bool mute)
