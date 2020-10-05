@@ -47,10 +47,10 @@ class Program
         //getting access token
         CreateSpotifyAPI();
 
-        AppLoop();
+        await AppLoop();
     }
 
-    static async void AppLoop()
+    static async Task AppLoop()
     {
         String status = "";
         int errorsCount = 0;
@@ -60,8 +60,11 @@ class Program
 
         PlaybackContext current;
 
+        
+
         while (true)
         {
+
             if (spotifyAPI != null)
             {
                 
@@ -209,12 +212,13 @@ class Program
 
     static async Task RefreshToken()
     {
-        Console.WriteLine("Refreshing access token...");
+        Console.WriteLine(String.Format("\r{0,-50}","Refreshing access token..."));
         Token newToken = await auth.RefreshToken(token.RefreshToken);
         spotifyAPI.AccessToken = newToken.AccessToken;
         spotifyAPI.TokenType = newToken.TokenType;
-        Console.WriteLine("Access token refreshed");
-        Console.WriteLine("Token expires at: " + DateTime.Now.AddSeconds(token.ExpiresIn));
+        token = newToken;
+        Console.WriteLine("Access token refreshed at "+ DateTime.Now);
+        Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
     }
 
     static void SetMute(bool mute)
