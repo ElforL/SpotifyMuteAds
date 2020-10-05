@@ -17,7 +17,7 @@ class Program
     
     static AudioSessionControl Spotifysession = null;
 
-    const int TIMEOUT_SECONDS = 30;
+    const int TIMEOUT_SECONDS = 60;
     static String clientID;
     static String clientSecret;
     const String redirectURL = "http://localhost:4002";
@@ -29,12 +29,18 @@ class Program
     {
         if(args.Length != 2)
         {
-            Console.WriteLine("Invalid paramaters: you ned to pass the clientID and the clientSecret as a paramaters");
+            Console.WriteLine("No/invalid paramaters detected");
+            Console.WriteLine("When running, pass the clientID and the clientSecret as a paramaters to avoid entering them in the browser everytime");
             Console.WriteLine("cmd command: SpotifyMuteAds.exe <clientID> <clientSecret>");
-            Environment.Exit(1);
+            Console.WriteLine("You can use _RUN.bat file but you need to edit it first");
+            Console.WriteLine("");
         }
-        clientID = args[0];
-        clientSecret = args[1];
+        else
+        {
+            clientID = args[0];
+            clientSecret = args[1];
+        }
+        
         // async Main()
         MainAsync(args).GetAwaiter().GetResult();
     }
