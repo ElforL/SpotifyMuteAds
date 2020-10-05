@@ -19,6 +19,6 @@ you can use `_RUN.bat` file, **but you need to edit it first**
 2. now replace the \<ClientID\> and \<ClientSecret\> with your ClientID and ClientSecret and save the file
 3. now you can use `_RUN.bat` to run the script
 
-### packages
+## Packages
 * [CSCore](https://github.com/filoe/cscore) to control the volume
 * [SpotifyAPI-NET](https://github.com/JohnnyCrazy/SpotifyAPI-NET) for API calls
