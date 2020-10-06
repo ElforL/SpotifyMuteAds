@@ -195,6 +195,14 @@ class Program
     static async Task CreateSpotifyAPI()
     {
 
+        auth = new AuthorizationCodeAuth(
+            clientID,
+            clientSecret,
+            redirectURL,
+            redirectURL,
+            Scope.UserReadCurrentlyPlaying
+        );
+
         if (File.Exists("AccessToken.json"))
         {
             Console.WriteLine("Loading files...");
@@ -227,13 +235,7 @@ class Program
         // if access token isn't saved or couldn't be loaded then go therough the authorization again
         // getting access token
         Console.WriteLine("Attempting authorization through browser...");
-        auth = new AuthorizationCodeAuth(
-            clientID,
-            clientSecret,
-            redirectURL,
-            redirectURL,
-            Scope.UserReadCurrentlyPlaying
-        );
+        
         auth.AuthReceived += async (sender, payload) =>
         {
             auth.Stop();
