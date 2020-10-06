@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
@@ -229,12 +228,23 @@ class Program
     {
         Console.WriteLine(String.Format("\r{0,-50}","Refreshing access token..."));
         Token newToken = await auth.RefreshToken(token.RefreshToken);
-        spotifyAPI.AccessToken = newToken.AccessToken;
-        spotifyAPI.TokenType = newToken.TokenType;
-        token = newToken;
-        Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
-        Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
-        Console.WriteLine("");
+        if (!newToken.HasError())
+        {
+            spotifyAPI.AccessToken = newToken.AccessToken;
+            spotifyAPI.TokenType = newToken.TokenType;
+            token.AccessToken = newToken.AccessToken;
+            Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
+            Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
+            Console.WriteLine("");
+        }
+        else
+        {
+            Console.WriteLine("TOKEN ERROR");
+            Console.WriteLine("Error:\t" + newToken.Error);
+            Console.WriteLine("Description:\t" + newToken.ErrorDescription);
+            Console.WriteLine("Shutting down...");
+            Environment.Exit(0);
+        }
     }
 
     static void SetMute(bool mute)
