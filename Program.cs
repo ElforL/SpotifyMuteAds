@@ -269,7 +269,11 @@ class Program
         {
             spotifyAPI.AccessToken = newToken.AccessToken;
             spotifyAPI.TokenType = newToken.TokenType;
+            
             token.AccessToken = newToken.AccessToken;
+            token.ExpiresIn = newToken.ExpiresIn;
+            token.CreateDate = newToken.CreateDate;
+
             Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
             Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
 
