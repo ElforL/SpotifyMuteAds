@@ -296,6 +296,12 @@ class Program
         spotifyVolume.IsMuted = mute;
     }
 
+    static void SetVolume(float vol)
+    {
+        var spotifyVolume = Spotifysession.QueryInterface<SimpleAudioVolume>();
+        spotifyVolume.MasterVolume = vol;
+    }
+
     private static AudioSessionManager2 GetDefaultAudioSessionManager2(DataFlow dataFlow)
     {
         using var enumerator = new MMDeviceEnumerator();
