@@ -140,7 +140,7 @@ class Program
                     SetVolume(1);
                     status = "Paused";
                     sleepTime = 1000;
-                    if (Spotifysession.QueryInterface<AudioMeterInformation>().PeakValue > 0)
+                    if (Spotifysession.QueryInterface<AudioMeterInformation>().PeakValue > 0.0001f)
                     { // if spotify's volume is more than 0 (playing someting) then set pauseMode to false
                         pauseMode = false;
                         continue;
