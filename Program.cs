@@ -1,6 +1,4 @@
-﻿using System;
-
-using SpotifyAPI.Web;
+﻿using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
@@ -8,12 +6,15 @@ using SpotifyAPI.Web.Models;
 using CSCore.CoreAudioAPI;
 using MMDeviceEnumerator = CSCore.CoreAudioAPI.MMDeviceEnumerator;
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
+using Newtonsoft.Json;
 
 class Program
 {
-    
+
     static AudioSessionControl Spotifysession = null;
 
     const int TIMEOUT_SECONDS = 60;
@@ -26,7 +27,7 @@ class Program
 
     public static void Main(string[] args)
     {
-        if(args.Length != 2)
+        if (args.Length != 2)
         {
             Console.WriteLine("No/invalid paramaters detected");
             Console.WriteLine("When running, pass the clientID and the clientSecret as a paramaters to avoid entering them in the browser everytime");
@@ -39,18 +40,18 @@ class Program
             clientID = args[0];
             clientSecret = args[1];
         }
-        
+
         // async Main()
-        MainAsync(args).GetAwaiter().GetResult();
+        MainAsync().GetAwaiter().GetResult();
     }
 
-    static async Task MainAsync(string[] args)
+    static async Task MainAsync()
     {
         // Finding Spotify audio session
         FindAudioSession();
 
         //getting access token
-        CreateSpotifyAPI();
+        await CreateSpotifyAPI();
 
         await AppLoop();
     }
@@ -65,14 +66,12 @@ class Program
 
         PlaybackContext current;
 
-        
-
         while (true)
         {
 
             if (spotifyAPI != null)
             {
-                
+
                 if (!pauseMode)
                 {
                     if (token.IsExpired()) await RefreshToken();
@@ -91,13 +90,14 @@ class Program
                             try
                             {
                                 sleepTime = int.Parse(current.Header("Retry-After")) * 1000;
-                            }catch (Exception ex)
+                            }
+                            catch (Exception)
                             {
                                 sleepTime = 60000;
                             }
-                            
+
                         }
-                        if(errorsCount % 5 == 0 && errorsCount != 0)
+                        if (errorsCount % 5 == 0 && errorsCount != 0)
                         {
                             Console.WriteLine("--------------------------------------------");
                             Console.WriteLine("WARNING: " + errorsCount + " errors in a row");
@@ -140,7 +140,7 @@ class Program
                     SetVolume(1);
                     status = "Paused";
                     sleepTime = 1000;
-                    if(Spotifysession.QueryInterface<AudioMeterInformation>().PeakValue > 0)
+                    if (Spotifysession.QueryInterface<AudioMeterInformation>().PeakValue > 0)
                     { // if spotify's volume is more than 0 (playing someting) then set pauseMode to false
                         pauseMode = false;
                         continue;
@@ -159,7 +159,7 @@ class Program
 
             }
 
-            if(!status.Equals("")) Console.Write(String.Format("\r{0,-50}",status));
+            if (!status.Equals("")) Console.Write(String.Format("\r{0,-50}", status));
             Thread.Sleep(sleepTime);
         }
     }
@@ -192,9 +192,41 @@ class Program
         }
     }
 
-    static void CreateSpotifyAPI()
+    static async Task CreateSpotifyAPI()
     {
+
+        if (File.Exists("AccessToken.json"))
+        {
+            Console.WriteLine("Loading files...");
+            String fileContent = File.ReadAllText("AccessToken.json");
+            try
+            {
+                if (fileContent != "")
+                {
+                    token = JsonConvert.DeserializeObject<Token>(fileContent);
+                    Console.WriteLine("Token acquired");
+                    Console.WriteLine("Connecting to Spotify API...");
+                    if(token.IsExpired()) await RefreshToken();
+                    spotifyAPI = new SpotifyWebAPI()
+                    {
+                        TokenType = token.TokenType,
+                        AccessToken = token.AccessToken
+                    };
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("File is empty");
+                }
+            }
+            catch (Exception) {
+                Console.WriteLine("An error occurred in loading files");
+            }
+        }
+
+        // if access token isn't saved or couldn't be loaded then go therough the authorization again
         // getting access token
+        Console.WriteLine("Attempting authorization through browser...");
         auth = new AuthorizationCodeAuth(
             clientID,
             clientSecret,
@@ -207,8 +239,8 @@ class Program
             auth.Stop();
             Console.WriteLine("Setting access token...");
             token = await auth.ExchangeCode(payload.Code);
-            // creating spotifyAPI
-            spotifyAPI = new SpotifyWebAPI()
+                // creating spotifyAPI
+                spotifyAPI = new SpotifyWebAPI()
             {
                 TokenType = token.TokenType,
                 AccessToken = token.AccessToken
@@ -216,17 +248,20 @@ class Program
             Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
             Console.WriteLine("Token expires at: " + DateTime.Now.AddSeconds(token.ExpiresIn));
             Console.WriteLine("don't worry we'll refresh it automatically");
+
+            SaveTokenToFile();
         };
         // prompt the user to authorize
         Console.WriteLine("Connecting to Spotify API...");
         Console.WriteLine("Please authorize the app in the borwser window that just opened");
         auth.Start();
         auth.OpenBrowser();
+
     }
 
     static async Task RefreshToken()
     {
-        Console.WriteLine(String.Format("\r{0,-50}","Refreshing access token..."));
+        Console.WriteLine(String.Format("\r{0,-50}", "Refreshing access token..."));
         Token newToken = await auth.RefreshToken(token.RefreshToken);
         if (!newToken.HasError())
         {
@@ -235,6 +270,8 @@ class Program
             token.AccessToken = newToken.AccessToken;
             Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
             Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
+
+            SaveTokenToFile();
             Console.WriteLine("");
         }
         else
@@ -247,16 +284,16 @@ class Program
         }
     }
 
-    static void SetMute(bool mute)
+    private static void SaveTokenToFile()
+    {
+        Console.WriteLine("Saving token to file...");
+        File.WriteAllText("AccessToken.json", JsonConvert.SerializeObject(token));
+    }
+
+    private static void SetMute(bool mute)
     {
         var spotifyVolume = Spotifysession.QueryInterface<SimpleAudioVolume>();
         spotifyVolume.IsMuted = mute;
-    }
-    
-    static void SetVolume(float vol)
-    {
-        var spotifyVolume = Spotifysession.QueryInterface<SimpleAudioVolume>();
-        spotifyVolume.MasterVolume = vol;
     }
 
     private static AudioSessionManager2 GetDefaultAudioSessionManager2(DataFlow dataFlow)
