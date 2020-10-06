@@ -117,7 +117,7 @@ class Program
                             }
                             else
                             {
-                                status = /*current.Item.Name; */String.Format("Playing: {0,-80}", current.Item.Name);
+                                status = String.Format("Playing: {0}", current.Item.Name);
                                 SetMute(false);
 
                                 // set the sleep time to the duration divided by 3 if it's less than the remiaing time
@@ -159,7 +159,7 @@ class Program
 
             }
 
-            if (!status.Equals("")) Console.Write(String.Format("\r{0}", status));
+            if (!status.Equals("")) Console.Write(String.Format("\r{0,-80}", status));
             Thread.Sleep(sleepTime);
         }
     }
