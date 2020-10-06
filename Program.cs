@@ -214,12 +214,12 @@ class Program
                     token = JsonConvert.DeserializeObject<Token>(fileContent);
                     Console.WriteLine("Token acquired");
                     Console.WriteLine("Connecting to Spotify API...");
-                    if(token.IsExpired()) await RefreshToken();
                     spotifyAPI = new SpotifyWebAPI()
                     {
                         TokenType = token.TokenType,
                         AccessToken = token.AccessToken
                     };
+                    if (token.IsExpired()) await RefreshToken();
                     return;
                 }
                 else
