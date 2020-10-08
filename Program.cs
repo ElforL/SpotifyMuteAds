@@ -24,6 +24,7 @@ class Program
     static SpotifyWebAPI spotifyAPI;
     static AuthorizationCodeAuth auth;
     static Token token;
+    static bool isAuthServerOn = false;
 
     public static void Main(string[] args)
     {
@@ -62,7 +63,7 @@ class Program
         int errorsCount = 0;
         bool pauseMode = false;
         DateTime startTime = DateTime.Now;
-        int sleepTime = 5000; // default sleep duration = 5s
+        int sleepTime = TIMEOUT_SECONDS * 1000; // default sleep duration = 5s
 
         PlaybackContext current;
 
@@ -74,7 +75,7 @@ class Program
 
                 if (!pauseMode)
                 {
-                    if (token.IsExpired()) await RefreshToken();
+                    if (token.IsExpired() && !isAuthServerOn) await RefreshToken();
                     current = spotifyAPI.GetPlayingTrack();
 
                     if (current.HasError())
@@ -252,18 +253,20 @@ class Program
             Console.WriteLine("don't worry we'll refresh it automatically");
 
             SaveTokenToFile();
+            isAuthServerOn = false;
         };
         // prompt the user to authorize
         Console.WriteLine("Connecting to Spotify API...");
         Console.WriteLine("Please authorize the app in the borwser window that just opened");
         auth.Start();
+        isAuthServerOn = true;
         auth.OpenBrowser();
-
+        
     }
 
     static async Task RefreshToken()
     {
-        Console.WriteLine(String.Format("\r{0,-50}", "Refreshing access token..."));
+        Console.WriteLine(String.Format("\r{0,-80}", "Refreshing access token..."));
         Token newToken = await auth.RefreshToken(token.RefreshToken);
         if (!newToken.HasError())
         {
@@ -283,10 +286,18 @@ class Program
         else
         {
             Console.WriteLine("TOKEN ERROR");
-            Console.WriteLine("Error:\t" + newToken.Error);
+            Console.WriteLine("Error:\t\t" + newToken.Error);
             Console.WriteLine("Description:\t" + newToken.ErrorDescription);
-            Console.WriteLine("Shutting down...");
-            Environment.Exit(0);
+            if (newToken.ErrorDescription == "Refresh token revoked") {
+                File.WriteAllText("AccessToken.json", "");
+                if (!isAuthServerOn)
+                    await CreateSpotifyAPI();
+            }
+            else 
+            {
+                Console.WriteLine("Shutting down...");
+                Environment.Exit(0);
+            }
         }
     }
 
