@@ -70,6 +70,13 @@ class Program
         while (true)
         {
 
+            if(Spotifysession == null || Spotifysession.QueryInterface<AudioSessionControl2>().Process.HasExited)
+            {
+                Console.Write("\rSpotify isn't running. Looking for new process");                                               
+                FindAudioSession(isSilent: true);
+                continue;
+            }
+
             if (spotifyAPI != null)
             {
 
@@ -165,18 +172,18 @@ class Program
         }
     }
 
-    static void FindAudioSession()
+    static void FindAudioSession(bool isSilent = false)
     {
-        Console.WriteLine("Finding Spotify audio session...");
+        if(!isSilent) Console.WriteLine("Finding Spotify audio session...");
         var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render);
         var sessionEnumerator = sessionManager.GetSessionEnumerator();
         foreach (var session in sessionEnumerator)
         {
             // looks through all the active sessions and looks for "spotify" in the `Process` toString
-
             var sesInf = session.QueryInterface<AudioSessionControl2>();
             if (sesInf.Process.ToString().ToLower().Contains("spotify"))
             {
+                Console.WriteLine("");
                 Console.WriteLine("Spotify session found");
                 Console.WriteLine("Process ID: " + sesInf.ProcessID);
                 Spotifysession = session;
@@ -185,11 +192,10 @@ class Program
         }
         if (Spotifysession == null)
         {
-            Console.WriteLine("Spotify not found");
-            Console.WriteLine("either it's not running or it doesn't have an active audio session, make sure it's showing in the volume mixer");
-            Console.WriteLine("try playing something and try again");
-            Console.WriteLine("Shutting down...");
-            Environment.Exit(1);
+            if (!isSilent) Console.WriteLine("Spotify not found.");
+            if (!isSilent) Console.WriteLine("either it's not running or it doesn't have an active audio session, try playing something and try again");
+            // if (!isSilent) Console.WriteLine("Shutting down...");
+            // Environment.Exit(1);
         }
     }
 
