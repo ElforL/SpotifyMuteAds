@@ -119,20 +119,26 @@ class Program
                         {
                             if (current.CurrentlyPlayingType == TrackType.Ad)
                             {
-                                status = "Muted";
                                 SetMute(true);
+                                status = "Muted";
                                 sleepTime = 1500;
                             }
-                            else
+                            else if (current.CurrentlyPlayingType == TrackType.Track)
                             {
-                                status = String.Format("Playing: {0}", current.Item.Name);
                                 SetMute(false);
+                                status = String.Format("Playing: {0}", current.Item.Name);
 
                                 // set the sleep time to the duration divided by 3 if it's less than the remiaing time
                                 if (current.Item.DurationMs - current.ProgressMs < current.Item.DurationMs / 3)
                                     sleepTime = current.Item.DurationMs - current.ProgressMs;
                                 else
                                     sleepTime = current.Item.DurationMs / 3;
+                            }
+                            else
+                            {   // if it's an `episode` (from a podcast or whatever)
+                                SetMute(false);
+                                status = "Playing...";
+                                sleepTime = 600000; //10 mins
                             }
                         }
                         else
