@@ -86,25 +86,12 @@ class Program
                     current = spotifyAPI.GetPlayingTrack();
 
                     if (current.HasError())
-                    { // Error; didn't get the track
+                    {   // Error; didn't get the track
                         errorsCount++;
                         Console.WriteLine("Error Status: " + current.Error.Status);
                         Console.WriteLine("Error Msg: " + current.Error.Message);
                         sleepTime = 10000;
 
-                        if (current.Error.Status == 429)
-                        {
-                            Console.WriteLine("`current header` key = `Retry-After` : " + current.Header("Retry-After"));
-                            try
-                            {
-                                sleepTime = int.Parse(current.Header("Retry-After")) * 1000;
-                            }
-                            catch (Exception)
-                            {
-                                sleepTime = 60000;
-                            }
-
-                        }
                         if (errorsCount % 5 == 0 && errorsCount != 0)
                         {
                             Console.WriteLine("--------------------------------------------");
@@ -113,7 +100,7 @@ class Program
                         }
                     }
                     else
-                    { // Got the track
+                    {   // Got the track
                         errorsCount = 0;
                         if (current.IsPlaying)
                         {
@@ -154,8 +141,11 @@ class Program
                     SetVolume(1);
                     status = "Paused";
                     sleepTime = 1000;
+
+                    // listen to spotify and if the volume is more than 0 (playing someting) then set pauseMode to false
+                    // using 0.001f because sometimes it reads 6e-10 even when there's nothing playing ¯\_(ツ)_/¯
                     if (Spotifysession.QueryInterface<AudioMeterInformation>().PeakValue > 0.0001f)
-                    { // if spotify's volume is more than 0 (playing someting) then set pauseMode to false
+                    {
                         pauseMode = false;
                         continue;
                     }
@@ -189,7 +179,6 @@ class Program
             var sesInf = session.QueryInterface<AudioSessionControl2>();
             if (sesInf.Process.ToString().ToLower().Contains("spotify"))
             {
-                Console.WriteLine("");
                 Console.WriteLine("Spotify session found");
                 Console.WriteLine("Process ID: " + sesInf.ProcessID);
                 Spotifysession = session;
@@ -200,8 +189,6 @@ class Program
         {
             if (!isSilent) Console.WriteLine("Spotify not found.");
             if (!isSilent) Console.WriteLine("either it's not running or it doesn't have an active audio session, try playing something and try again");
-            // if (!isSilent) Console.WriteLine("Shutting down...");
-            // Environment.Exit(1);
         }
     }
 
@@ -254,15 +241,15 @@ class Program
             auth.Stop();
             Console.WriteLine("Setting access token...");
             token = await auth.ExchangeCode(payload.Code);
-                // creating spotifyAPI
-                spotifyAPI = new SpotifyWebAPI()
+            // creating spotifyAPI
+            spotifyAPI = new SpotifyWebAPI()
             {
                 TokenType = token.TokenType,
                 AccessToken = token.AccessToken
             };
             Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
             Console.WriteLine("Token expires at: " + DateTime.Now.AddSeconds(token.ExpiresIn));
-            Console.WriteLine("don't worry we'll refresh it automatically");
+            Console.WriteLine("don't worry it'll refresh automatically");
 
             SaveTokenToFile();
             isAuthServerOn = false;
