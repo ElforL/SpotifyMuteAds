@@ -30,11 +30,12 @@ class Program
     {
         if (args.Length != 2)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("No/invalid paramaters detected");
             Console.WriteLine("When running, pass the clientID and the clientSecret as a paramaters to avoid entering them in the browser everytime");
-            Console.WriteLine("cmd command: SpotifyMuteAds.exe <clientID> <clientSecret>");
-            Console.WriteLine("You can use _RUN.bat file but you need to edit it first");
+            Console.WriteLine("Refer to the README file for instructions");
             Console.WriteLine("");
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
         else
         {
@@ -72,7 +73,7 @@ class Program
 
             if(Spotifysession == null || Spotifysession.QueryInterface<AudioSessionControl2>().Process.HasExited)
             {
-                Console.Write("\rSpotify isn't running. Looking for new process");                                               
+                Console.Write("\rSpotify isn't running. Looking for new process");
                 FindAudioSession(isSilent: true);
                 continue;
             }
@@ -88,16 +89,19 @@ class Program
                     if (current.HasError())
                     {   // Error; didn't get the track
                         errorsCount++;
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Error Status: " + current.Error.Status);
                         Console.WriteLine("Error Msg: " + current.Error.Message);
                         sleepTime = 10000;
 
                         if (errorsCount % 5 == 0 && errorsCount != 0)
                         {
+                            Console.ForegroundColor = ConsoleColor.DarkRed;
                             Console.WriteLine("--------------------------------------------");
                             Console.WriteLine("WARNING: " + errorsCount + " errors in a row");
                             Console.WriteLine("--------------------------------------------");
                         }
+                        Console.ForegroundColor = ConsoleColor.Gray;
                     }
                     else
                     {   // Got the track
@@ -156,8 +160,10 @@ class Program
                 // shutdown if connecting took more than TIMEOUT_SECONDS
                 if ((DateTime.Now - startTime).TotalSeconds > TIMEOUT_SECONDS)
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(String.Format("Timeout: connecting took too long: {0:0.00} seconds", (DateTime.Now - startTime).TotalSeconds));
                     Console.WriteLine("Shutting down...");
+                    Console.ForegroundColor = ConsoleColor.Gray;
                     Environment.Exit(1);
                 }
 
@@ -179,7 +185,8 @@ class Program
             var sesInf = session.QueryInterface<AudioSessionControl2>();
             if (sesInf.Process.ToString().ToLower().Contains("spotify"))
             {
-                Console.WriteLine("Spotify session found");
+                Console.Write("\r");
+                Console.WriteLine(String.Format("{0,-80}", "Spotify session found"));
                 Console.WriteLine("Process ID: " + sesInf.ProcessID);
                 Spotifysession = session;
                 break;
@@ -187,8 +194,10 @@ class Program
         }
         if (Spotifysession == null)
         {
+            if (!isSilent) Console.ForegroundColor = ConsoleColor.Red;
             if (!isSilent) Console.WriteLine("Spotify not found.");
-            if (!isSilent) Console.WriteLine("either it's not running or it doesn't have an active audio session, try playing something and try again");
+            if (!isSilent) Console.WriteLine("either it's not running or it doesn't have an active audio session, try playing something");
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
 
@@ -228,7 +237,9 @@ class Program
                 }
             }
             catch (Exception) {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("An error occurred in loading files");
+                Console.ForegroundColor = ConsoleColor.Gray;
             }
         }
 
@@ -254,13 +265,14 @@ class Program
             SaveTokenToFile();
             isAuthServerOn = false;
         };
-        // prompt the user to authorize
         Console.WriteLine("Connecting to Spotify API...");
-        Console.WriteLine("Please authorize the app in the borwser window that just opened");
         auth.Start();
         isAuthServerOn = true;
         auth.OpenBrowser();
-        
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("Please authorize the app in the borwser window that just opened");
+        Console.ForegroundColor = ConsoleColor.Gray;
+
     }
 
     static async Task RefreshToken()
@@ -284,9 +296,11 @@ class Program
         }
         else
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("TOKEN ERROR");
             Console.WriteLine("Error:\t\t" + newToken.Error);
             Console.WriteLine("Description:\t" + newToken.ErrorDescription);
+            Console.ForegroundColor = ConsoleColor.Gray;
             if (newToken.ErrorDescription == "Refresh token revoked") {
                 File.WriteAllText("AccessToken.json", "");
                 if (!isAuthServerOn)
@@ -294,7 +308,9 @@ class Program
             }
             else 
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Shutting down...");
+                Console.ForegroundColor = ConsoleColor.Gray;
                 Environment.Exit(0);
             }
         }
