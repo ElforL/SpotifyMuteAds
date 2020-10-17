@@ -186,7 +186,9 @@ class Program
             if (sesInf.Process.ToString().ToLower().Contains("spotify"))
             {
                 Console.Write("\r");
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine(String.Format("{0,-80}", "Spotify session found"));
+                Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine("Process ID: " + sesInf.ProcessID);
                 Spotifysession = session;
                 break;
