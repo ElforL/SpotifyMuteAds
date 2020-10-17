@@ -230,6 +230,7 @@ class Program
                         TokenType = token.TokenType,
                         AccessToken = token.AccessToken
                     };
+                    Console.WriteLine("Connected");
                     if (token.IsExpired()) await RefreshToken();
                     return;
                 }
@@ -260,6 +261,7 @@ class Program
                 TokenType = token.TokenType,
                 AccessToken = token.AccessToken
             };
+            Console.WriteLine("Connected");
             Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
             Console.WriteLine("Token expires at: " + DateTime.Now.AddSeconds(token.ExpiresIn));
             Console.WriteLine("don't worry it'll refresh automatically");
