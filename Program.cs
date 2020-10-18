@@ -83,7 +83,7 @@ class Program
 
                 if (!pauseMode)
                 {
-                    if (token.IsExpired() && !isAuthServerOn) await RefreshToken(isSilent = true);
+                    if (token.IsExpired() && !isAuthServerOn) await RefreshToken(isSilent: true);
                     current = spotifyAPI.GetPlayingTrack();
 
                     if (current.HasError())
