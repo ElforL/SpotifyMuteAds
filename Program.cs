@@ -83,7 +83,7 @@ class Program
 
                 if (!pauseMode)
                 {
-                    if (token.IsExpired() && !isAuthServerOn) await RefreshToken();
+                    if (token.IsExpired() && !isAuthServerOn) await RefreshToken(isSilent = true);
                     current = spotifyAPI.GetPlayingTrack();
 
                     if (current.HasError())
@@ -279,9 +279,9 @@ class Program
 
     }
 
-    static async Task RefreshToken()
+    static async Task RefreshToken(bool isSilent = false)
     {
-        Console.WriteLine(String.Format("\r{0,-80}", "Refreshing access token..."));
+        if(!isSilent) Console.WriteLine(String.Format("\r{0,-80}", "Refreshing access token..."));
         Token newToken = await auth.RefreshToken(token.RefreshToken);
         if (!newToken.HasError())
         {
@@ -292,11 +292,10 @@ class Program
             token.ExpiresIn = newToken.ExpiresIn;
             token.CreateDate = newToken.CreateDate;
 
-            Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
-            Console.WriteLine("Token expires at " + DateTime.Now.AddSeconds(token.ExpiresIn));
+            if (!isSilent) Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
 
             SaveTokenToFile();
-            Console.WriteLine("");
+            if (!isSilent) Console.WriteLine("");
         }
         else
         {
