@@ -291,7 +291,7 @@ class Program
 
             if (!isSilent) Console.WriteLine("New '" + token.TokenType + "' access token acquired at " + DateTime.Now);
 
-            SaveTokenToFile();
+            SaveTokenToFile(isSilent);
             if (!isSilent) Console.WriteLine("");
         }
         else
@@ -316,9 +316,9 @@ class Program
         }
     }
 
-    private static void SaveTokenToFile()
+    private static void SaveTokenToFile(bool isSilent = false)
     {
-        Console.WriteLine("Saving token to file...");
+        if (!isSilent) Console.WriteLine("Saving token to file...");
         File.WriteAllText("AccessToken.json", JsonConvert.SerializeObject(token));
     }
 
