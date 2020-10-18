@@ -84,7 +84,7 @@ class Program
                 if (!pauseMode)
                 {
                     if (token.IsExpired() && !isAuthServerOn) await RefreshToken(isSilent: true);
-                    current = spotifyAPI.GetPlayingTrack();
+                    current = spotifyAPI.GetPlayingTrack("US&additional_types=episode");
 
                     if (current.HasError())
                     {   // Error; didn't get the track
@@ -114,22 +114,19 @@ class Program
                                 status = "Muted";
                                 sleepTime = 1500;
                             }
-                            else if (current.CurrentlyPlayingType == TrackType.Track)
+                            else
                             {
                                 SetMute(false);
                                 status = String.Format("Playing: {0}", current.Item.Name);
 
-                                // set the sleep time to the duration divided by 3 if it's less than the remiaing time
-                                if (current.Item.DurationMs - current.ProgressMs < current.Item.DurationMs / 3)
+                                // set the sleep time to the duration divided by numOfChecks if it's less than the remiaing time
+                                // so basically if it's an episode check every tenth of the episode's duration (every third for track) to see if it's still running
+                                // example: an episode that's 50 mins long. will check every 5 mins
+                                int numOfChecks = current.CurrentlyPlayingType == TrackType.Track ? 3 : 10;
+                                if (current.Item.DurationMs - current.ProgressMs < current.Item.DurationMs / numOfChecks)
                                     sleepTime = current.Item.DurationMs - current.ProgressMs;
                                 else
-                                    sleepTime = current.Item.DurationMs / 3;
-                            }
-                            else
-                            {   // if it's an `episode` (from a podcast or whatever)
-                                SetMute(false);
-                                status = "Playing...";
-                                sleepTime = 600000; //10 mins
+                                    sleepTime = current.Item.DurationMs / numOfChecks;
                             }
                         }
                         else
