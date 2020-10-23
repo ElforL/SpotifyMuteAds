@@ -11,11 +11,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 class Program
 {
 
-    static AudioSessionControl Spotifysession = null;
+    static AudioSessionControl spotifyAudioSession = null;
+    static Process spotifyProcess = null;
 
     const int TIMEOUT_SECONDS = 60;
     static String clientID;
@@ -71,7 +73,7 @@ class Program
         while (true)
         {
 
-            if(Spotifysession == null || Spotifysession.QueryInterface<AudioSessionControl2>().Process.HasExited)
+            if(spotifyAudioSession == null || spotifyProcess.HasExited)
             {
                 Console.Write("\rSpotify isn't running. Looking for new process");
                 FindAudioSession(isSilent: true);
@@ -145,7 +147,7 @@ class Program
 
                     // listen to spotify and if the volume is more than 0 (playing someting) then set pauseMode to false
                     // using 0.001f because sometimes it reads 6e-10 even when there's nothing playing ¯\_(ツ)_/¯
-                    if (Spotifysession.QueryInterface<AudioMeterInformation>().PeakValue > 0.0001f)
+                    if (spotifyAudioSession.QueryInterface<AudioMeterInformation>().PeakValue > 0.0001f)
                     {
                         pauseMode = false;
                         continue;
@@ -187,11 +189,12 @@ class Program
                 Console.WriteLine(String.Format("{0,-80}", "Spotify session found"));
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine("Process ID: " + sesInf.ProcessID);
-                Spotifysession = session;
+                spotifyAudioSession = session;
+                spotifyProcess = spotifyAudioSession.QueryInterface<AudioSessionControl2>().Process;
                 break;
             }
         }
-        if (Spotifysession == null)
+        if (spotifyAudioSession == null)
         {
             if (!isSilent) Console.ForegroundColor = ConsoleColor.Red;
             if (!isSilent) Console.WriteLine("Spotify not found.");
@@ -324,13 +327,13 @@ class Program
 
     private static void SetMute(bool mute)
     {
-        var spotifyVolume = Spotifysession.QueryInterface<SimpleAudioVolume>();
+        var spotifyVolume = spotifyAudioSession.QueryInterface<SimpleAudioVolume>();
         spotifyVolume.IsMuted = mute;
     }
 
     static void SetVolume(float vol)
     {
-        var spotifyVolume = Spotifysession.QueryInterface<SimpleAudioVolume>();
+        var spotifyVolume = spotifyAudioSession.QueryInterface<SimpleAudioVolume>();
         spotifyVolume.MasterVolume = vol;
     }
 
