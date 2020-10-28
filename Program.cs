@@ -181,18 +181,28 @@ class Program
         foreach (var session in sessionEnumerator)
         {
             // looks through all the active sessions and looks for "spotify" in the `Process` toString
-            var sesInf = session.QueryInterface<AudioSessionControl2>();
-            if (sesInf.Process.ToString().ToLower().Contains("spotify"))
+            try
             {
-                Console.Write("\r");
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(String.Format("{0,-80}", "Spotify session found"));
-                Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine("Process ID: " + sesInf.ProcessID);
-                spotifyAudioSession = session;
-                spotifyProcess = spotifyAudioSession.QueryInterface<AudioSessionControl2>().Process;
-                break;
+                var sesInf = session.QueryInterface<AudioSessionControl2>();
+                if (sesInf.Process.ToString().ToLower().Contains("spotify"))
+                {
+                    Console.Write("\r");
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(String.Format("{0,-80}", "Spotify session found"));
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.WriteLine("Process ID: " + sesInf.ProcessID);
+                    spotifyAudioSession = session;
+                    spotifyProcess = spotifyAudioSession.QueryInterface<AudioSessionControl2>().Process;
+                    break;
+                }
             }
+            catch (InvalidOperationException)
+            {
+                // this can happen if the current session (in the loop, not Spotify) exited before we check its name
+                // this will resault in the following "System.InvalidOperationException: Process has exited, so the requested information is not available."
+                continue;
+            }
+            
         }
         if (spotifyAudioSession == null)
         {
