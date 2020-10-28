@@ -6,7 +6,7 @@ a windows C# script that mutes Spotify when an ad's playing
 ## Running
 ### Setting up:
 you'll need a [ClientID and ClientSecret](https://developer.spotify.com/documentation/web-api/quick-start/#set-up-your-account) for it to run.
-when you run it it'll ask you to enter them in the browser, then will ask you to authorize the app in your spotify account.
+when you run for the first time it it'll ask you to enter them in the browser, then will ask you to authorize the app in your spotify account.
 
 you can pass the ClientID and ClientSecret as paramaters to avoid entering them in the browser  
 cmd/shell command:
@@ -20,10 +20,12 @@ you can use `_RUN.bat` file, **but you need to edit it first**
 3. now you can use `_RUN.bat` to run the script
 
 ### Starting:
-After running a browser tab will open  
+After running for the first time, a browser tab will open  
   1. If you didn't pass the clientID and clientSecret it'll ask you to enter them now. if you did, then you can skip this step
   2. Then it's goning to ask you to authourize the app with your spotify account, do it and wait for the message ("OK - This window can be closed now")
   <!-- -->
+after that you don't need to pass the clientID and clientSecret anymore (as long as the access token isn't revoked, or the file `AccessToken.json` isn't deleted).
+
 Great! we're done.  
 The console will display the current state as:
 * **Playing: \<current song\>**: the currently playing song
