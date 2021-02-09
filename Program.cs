@@ -12,13 +12,12 @@ using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
 using System.Diagnostics;
-using System.Collections.Generic;
 
 class Program
 {
 
-    static List<AudioSessionControl> spotifyAudioSessions = new List<AudioSessionControl>();
-    static List<Process> spotifyProcesses = new List<Process>();
+    static AudioSessionControl spotifyAudioSession = null;
+    static Process spotifyProcess = null;
 
     const int TIMEOUT_SECONDS = 60;
     static String clientID;
@@ -53,7 +52,7 @@ class Program
     static async Task MainAsync()
     {
         // Finding Spotify audio session
-        FindAudioSessions();
+        FindAudioSession();
 
         //getting access token
         await CreateSpotifyAPI();
@@ -74,11 +73,10 @@ class Program
         while (true)
         {
 
-            FindAudioSessions(isSilent: true);
-
-            if(spotifyAudioSessions.Count == 0 || HasProcessesExited())
+            if(spotifyAudioSession == null || spotifyProcess.HasExited)
             {
                 Console.Write("\rSpotify isn't running. Looking for new process");
+                FindAudioSession(isSilent: true);
                 continue;
             }
 
@@ -149,17 +147,14 @@ class Program
 
                     // listen to spotify and if the volume is more than 0 (playing someting) then set pauseMode to false
                     // using 0.001f because sometimes it reads 6e-10 even when there's nothing playing ¯\_(ツ)_/¯
-                    foreach (AudioSessionControl session in spotifyAudioSessions)
+                    if (spotifyAudioSession.QueryInterface<AudioMeterInformation>().PeakValue > 0.0001f)
                     {
-                        if (session.QueryInterface<AudioMeterInformation>().PeakValue > 0.0001f)
-                        {
-                            pauseMode = false;
-                            break;
-                        }
+                        pauseMode = false;
+                        continue;
                     }
                 }
             }
-            else // when SpotifyAPI is null, usually because it didn't recive the access token yet
+            else // when SpotifyAPI is null, i.e didn't recive the access token yet
             {
                 // shutdown if connecting took more than TIMEOUT_SECONDS
                 if ((DateTime.Now - startTime).TotalSeconds > TIMEOUT_SECONDS)
@@ -178,49 +173,42 @@ class Program
         }
     }
 
-    static void FindAudioSessions(bool isSilent = false)
+    static void FindAudioSession(bool isSilent = false)
     {
-        // Clear previous
-        spotifyAudioSessions.Clear();
-        spotifyProcesses.Clear();
-
-        // Start
-        if(!isSilent) Console.WriteLine("Looking for Spotify audio session...");
+        if(!isSilent) Console.WriteLine("Finding Spotify audio session...");
         var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render);
         var sessionEnumerator = sessionManager.GetSessionEnumerator();
         foreach (var session in sessionEnumerator)
         {
-            // looks through all the active sessions and looks for "spotify" in the `Process` name
+            // looks through all the active sessions and looks for "spotify" in the `Process` toString
             try
             {
                 var sesInf = session.QueryInterface<AudioSessionControl2>();
                 if (sesInf.Process.ToString().ToLower().Contains("spotify"))
                 {
-                    if (!isSilent)
-                    {
-                        Console.Write("\r");
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine(String.Format("{0,-80}", "Spotify session found"));
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        Console.WriteLine("Process ID: " + sesInf.ProcessID);
-                    }
-                    spotifyAudioSessions.Add(session);
-                    spotifyProcesses.Add(session.QueryInterface<AudioSessionControl2>().Process);
+                    Console.Write("\r");
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(String.Format("{0,-80}", "Spotify session found"));
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.WriteLine("Process ID: " + sesInf.ProcessID);
+                    spotifyAudioSession = session;
+                    spotifyProcess = spotifyAudioSession.QueryInterface<AudioSessionControl2>().Process;
+                    break;
                 }
             }
             catch (InvalidOperationException)
             {
-                // this can happen if the session (in the loop) exited before we check its name
+                // this can happen if the current session (in the loop, not Spotify) exited before we check its name
                 // this will resault in the following "System.InvalidOperationException: Process has exited, so the requested information is not available."
                 continue;
             }
             
         }
-        if (spotifyAudioSessions.Count == 0 && !isSilent)
+        if (spotifyAudioSession == null)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Spotify not found.");
-            Console.WriteLine("either it's not running or it doesn't have an active audio session, try playing something");
+            if (!isSilent) Console.ForegroundColor = ConsoleColor.Red;
+            if (!isSilent) Console.WriteLine("Spotify not found.");
+            if (!isSilent) Console.WriteLine("either it's not running or it doesn't have an active audio session, try playing something");
             Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
@@ -349,34 +337,14 @@ class Program
 
     private static void SetMute(bool mute)
     {
-        foreach (AudioSessionControl session in spotifyAudioSessions)
-        {
-            var sessionVolume = session.QueryInterface<SimpleAudioVolume>();
-            sessionVolume.IsMuted = mute;
-        }
-        
+        var spotifyVolume = spotifyAudioSession.QueryInterface<SimpleAudioVolume>();
+        spotifyVolume.IsMuted = mute;
     }
 
     static void SetVolume(float vol)
     {
-        foreach (AudioSessionControl session in spotifyAudioSessions)
-        {
-            var sessionVolume = session.QueryInterface<SimpleAudioVolume>();
-            sessionVolume.MasterVolume = vol;
-        }
-            
-    }
-
-
-
-    static bool HasProcessesExited()
-    {
-        foreach (Process process in spotifyProcesses)
-        {
-            if (process.HasExited)
-                return true;
-        }
-        return false;
+        var spotifyVolume = spotifyAudioSession.QueryInterface<SimpleAudioVolume>();
+        spotifyVolume.MasterVolume = vol;
     }
 
     private static AudioSessionManager2 GetDefaultAudioSessionManager2(DataFlow dataFlow)
