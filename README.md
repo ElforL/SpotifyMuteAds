@@ -1,6 +1,8 @@
 # SpotifyMuteAds
 a windows C# script that mutes Spotify when an ad's playing
 
+NOTE: This software is for **educational purposes only**. DO NOT use it in any way against [Spotify terms and conditions of use](https://www.spotify.com/us/legal/end-user-agreement/).
+
 ## [Download](https://github.com/ElforL/SpotifyMuteAds/releases)
 
 ## Running
